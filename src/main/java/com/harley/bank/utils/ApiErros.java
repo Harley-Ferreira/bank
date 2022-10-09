@@ -1,4 +1,4 @@
-package com.harley.bank.controllers;
+package com.harley.bank.utils;
 
 import lombok.Getter;
 import org.springframework.validation.BindingResult;

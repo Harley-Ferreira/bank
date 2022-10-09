@@ -3,7 +3,7 @@ package com.harley.bank.service;
 import com.harley.bank.model.entities.Transfer;
 import com.harley.bank.model.repositories.TransferRepository;
 import com.harley.bank.model.services.TransferService;
-import com.harley.bank.model.services.implementations.RegraNegocioException;
+import com.harley.bank.exceptions.RegraNegocioException;
 import com.harley.bank.model.services.implementations.TransferServiceImp;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

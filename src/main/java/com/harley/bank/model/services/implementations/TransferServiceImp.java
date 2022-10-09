@@ -1,5 +1,6 @@
 package com.harley.bank.model.services.implementations;
 
+import com.harley.bank.exceptions.RegraNegocioException;
 import com.harley.bank.model.entities.Transfer;
 import com.harley.bank.model.repositories.TransferRepository;
 import com.harley.bank.model.services.TransferService;
