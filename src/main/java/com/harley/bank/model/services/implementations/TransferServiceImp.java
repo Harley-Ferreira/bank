@@ -3,8 +3,11 @@ package com.harley.bank.model.services.implementations;
 import com.harley.bank.model.entities.Transfer;
 import com.harley.bank.model.repositories.TransferRepository;
 import com.harley.bank.model.services.TransferService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -22,8 +25,19 @@ public class TransferServiceImp implements TransferService {
 
         transfer = descontaTaxa(transfer);
 
-        return transferRepository.save(transfer);
+        return transferRepository.save(descontaTaxa(transfer));
     }
+
+    @Override
+    public Page<Transfer> getTransfersList(Transfer transfer, Pageable pageable) {
+        Example example = Example.of(transfer, ExampleMatcher
+                        .matching()
+                        .withIgnoreCase()
+                        .withIgnoreNullValues()
+                        .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING));
+        return transferRepository.findAll(example, pageable);
+    }
+
 
     private Transfer descontaTaxa(Transfer transfer) {
         LocalDate todayDate = LocalDate.now();

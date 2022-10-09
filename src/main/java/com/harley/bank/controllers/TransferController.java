@@ -5,14 +5,15 @@ import com.harley.bank.model.entities.Transfer;
 import com.harley.bank.model.services.TransferService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.awt.print.Book;
 import java.util.List;
 
 @RestController
@@ -31,6 +32,18 @@ public class TransferController {
         Transfer savedTransfer = transferService.createTransfer(transfer);
 
         return modelMapper.map(savedTransfer, TransferDTO.class);
+    }
+
+    @GetMapping
+    public Page<TransferDTO> getTransfersList(TransferDTO transferDTO, Pageable pageable) {
+        Transfer transferFilter = modelMapper.map(transferDTO, Transfer.class);
+        Page<Transfer> transferList = transferService.getTransfersList(transferFilter, pageable);
+        List<TransferDTO> transferDTOList = transferList.getContent()
+                .stream()
+                .map(t -> modelMapper.map(t, TransferDTO.class))
+                .toList();
+
+        return new PageImpl<>(transferDTOList, pageable, transferList.getTotalElements());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

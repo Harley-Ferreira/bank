@@ -12,10 +12,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -38,7 +44,7 @@ public class TransferServiceTest {
     public void givenATransfer_WhenCallCreateTransfer_ThenSaveAndReturnATranfer() {
         LocalDate dateNow = LocalDate.now();
         Transfer transfer = Transfer.builder().originAccount(123456).destinationAccount(654321).transferValue(100.0).schedulingDate(dateNow).build();
-        Transfer expectedTransfer = Transfer.builder().id(1L).originAccount(123456).transferValue(100.0).destinationAccount(654321).transferDate(dateNow).schedulingDate(dateNow).build();
+        Transfer expectedTransfer = getTransfer();
         when(transferRepository.save(any(Transfer.class))).thenReturn(expectedTransfer);
 
         Transfer returnedTransfer = transferService.createTransfer(transfer);
@@ -71,5 +77,28 @@ public class TransferServiceTest {
         Throwable error = catchThrowableOfType(() -> transferService.createTransfer(transfer), RegraNegocioException.class);
         Assertions.assertThat(error).isInstanceOf(RegraNegocioException.class).hasMessage("Não foi possível calcular uma taxa para os parâmetros passados.");
         verify(transferRepository, never()).save(transfer);
+    }
+
+    @Test
+    @DisplayName("Deve retorna um page de transfer")
+    public void givenAnyParam_WhenCallGetTransfersList_ThenReturnAPageTransfer() {
+        Transfer transfer = getTransfer();
+        List<Transfer> transferList = Arrays.asList(transfer);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<Transfer> transferPage = new PageImpl<>(transferList, pageRequest, 1);
+        Mockito.when(transferRepository.findAll(any(Example.class), any(PageRequest.class))).thenReturn(transferPage);
+
+        Page<Transfer> returnedTransfersList = transferService.getTransfersList(transfer, pageRequest);
+
+        assertThat(returnedTransfersList.getTotalElements()).isEqualTo(1);
+        assertThat(returnedTransfersList.getContent()).isEqualTo(transferList);
+        assertThat(returnedTransfersList.getPageable().getPageNumber()).isZero();
+        assertThat(returnedTransfersList.getPageable().getPageSize()).isEqualTo(10);
+    }
+
+    private Transfer getTransfer() {
+        LocalDate dateNow = LocalDate.now();
+
+        return Transfer.builder().id(1L).originAccount(123456).transferValue(100.0).destinationAccount(654321).transferDate(dateNow).schedulingDate(dateNow).build();
     }
 }

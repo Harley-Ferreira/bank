@@ -1,6 +1,5 @@
 package com.harley.bank.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harley.bank.dtos.TransferDTO;
 import com.harley.bank.model.entities.Transfer;
@@ -15,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -23,6 +25,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -44,13 +47,10 @@ public class TransferControllerTest {
     @Test
     @DisplayName("Deve agendar uma transferência com sucesso.")
     public void givenValidParams_whenCallScheduleTransfer_thenReturnACreatedSchedule() throws Exception {
-        LocalDate schedulingDate = LocalDate.now().plusDays(1);
-
         TransferDTO transferDTO = TransferDTO.builder().originAccount(123456).destinationAccount(654321)
                 .transferValue(100.0).build();
 
-        Transfer transfer = Transfer.builder().id(1L).originAccount(123456).destinationAccount(654321)
-                .transferValue(100.0).schedulingDate(schedulingDate).transferDate(LocalDate.now()).build();
+        Transfer transfer = getTransfer();
         BDDMockito.given(transferService.createTransfer(Mockito.any(Transfer.class))).willReturn(transfer);
 
         String json = new ObjectMapper().writeValueAsString(transferDTO);
@@ -83,5 +83,38 @@ public class TransferControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("erros", hasSize(3)));
 
+    }
+
+    @Test
+    @DisplayName("Deve retornar uma lista com todos os agendamentos feitos pelo usuário.")
+    public void givenAnyParam_WhenCallGetTransfersList_ThenReturnAPageTransferDTO() throws Exception {
+        Transfer transfer = getTransfer();
+
+        BDDMockito.given(transferService.getTransfersList(Mockito.any(Transfer.class), Mockito.any(Pageable.class)))
+                .willReturn(new PageImpl<>(Arrays.asList(transfer), PageRequest.of(0, 100), 1));
+
+        String queryString = String.format("?page=0&size=100");
+
+        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
+                .get(URL_TRANSFER_API.concat(queryString))
+                .accept(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(requestBuilder)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("content", Matchers.hasSize(1)))
+                .andExpect(jsonPath("totalElements").value(1))
+                .andExpect(jsonPath("pageable.pageSize").value(100))
+                .andExpect(jsonPath("pageable.pageNumber").value(0));
+    }
+
+    private Transfer getTransfer() {
+        LocalDate schedulingDate = LocalDate.now().plusDays(1);
+        return Transfer.builder()
+                .id(1L)
+                .originAccount(123456)
+                .destinationAccount(654321)
+                .transferValue(100.0)
+                .schedulingDate(schedulingDate)
+                .transferDate(LocalDate.now()).build();
     }
 }
