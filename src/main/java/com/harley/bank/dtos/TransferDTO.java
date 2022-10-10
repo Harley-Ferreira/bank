@@ -1,11 +1,9 @@
 package com.harley.bank.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -15,6 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class TransferDTO {
 
+    @JsonProperty("_id")
     private Long id;
 
     @NotNull
@@ -26,6 +25,7 @@ public class TransferDTO {
     @NotNull
     private Double transferValue;
 
+    private LocalDate transferDate;
 
-    private String schedulingDate;
+    private LocalDate schedulingDate;
 }

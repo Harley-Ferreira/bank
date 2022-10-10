@@ -42,15 +42,15 @@ public class TransferServiceImp implements TransferService {
 
     private Transfer descontaTaxa(Transfer transfer) {
         LocalDate todayDate = LocalDate.now();
-        LocalDate schedulingDate = transfer.getSchedulingDate();
+        LocalDate transferDate = transfer.getTransferDate();
 
-        if (schedulingDate.isBefore(todayDate)) {
+        if (transferDate.isBefore(todayDate)) {
             throw new RegraNegocioException("A data de transferência deve ser superior a data de hoje.");
         }
 
-        transfer.setTransferDate(todayDate);
+        transfer.setSchedulingDate(todayDate);
 
-        long days = ChronoUnit.DAYS.between(todayDate, schedulingDate);
+        long days = ChronoUnit.DAYS.between(todayDate, transferDate);
         Double transferValue = transfer.getTransferValue();
 
         if (transferValue > 0.0 && transferValue <= 1000.0 && days == 0) {
@@ -64,9 +64,9 @@ public class TransferServiceImp implements TransferService {
                 transferValue -= (transferValue * 0.047);
             } else if (days > 30 && days <= 40) {
                 transferValue -= (transferValue * 0.017);
+            } else {
+                throw new RegraNegocioException("Não foi possível calcular uma taxa para os parâmetros passados.");
             }
-        } else {
-            throw new RegraNegocioException("Não foi possível calcular uma taxa para os parâmetros passados.");
         }
 
         transfer.setTransferValue(transferValue);
