@@ -25,6 +25,8 @@ public class TransferDTO {
     @NotNull
     private Double transferValue;
 
+    private Double transferTaxa;
+
     private LocalDate transferDate;
 
     private LocalDate schedulingDate;

@@ -43,7 +43,7 @@ public class TransferServiceTest {
     @DisplayName("Deve salvar um transferência com sucesso.")
     public void givenATransfer_WhenCallCreateTransfer_ThenSaveAndReturnATranfer() {
         LocalDate dateNow = LocalDate.now();
-        Transfer transfer = Transfer.builder().originAccount(123456).destinationAccount(654321).transferValue(100.0).schedulingDate(dateNow).build();
+        Transfer transfer = Transfer.builder().originAccount(123456).destinationAccount(654321).transferValue(100.0).transferDate(dateNow).build();
         Transfer expectedTransfer = getTransfer();
         when(transferRepository.save(any(Transfer.class))).thenReturn(expectedTransfer);
 
@@ -60,8 +60,8 @@ public class TransferServiceTest {
     @Test
     @DisplayName("Deve lançar erro ao calcular taxa de transferencia.")
     public void givenInvalidSchedulingDate_WhenCallDescontaTaxa_ThenThrowAnException() {
-        LocalDate schedulingDate = LocalDate.now().minusDays(1);
-        Transfer transfer = Transfer.builder().schedulingDate(schedulingDate).transferValue(1000.0).build();
+        LocalDate transferDate = LocalDate.now().minusDays(1);
+        Transfer transfer = Transfer.builder().transferDate(transferDate).transferValue(1000.0).build();
 
         Throwable error = catchThrowableOfType(() -> transferService.createTransfer(transfer), RegraNegocioException.class);
         Assertions.assertThat(error).isInstanceOf(RegraNegocioException.class).hasMessage("A data de transferência deve ser superior a data de hoje.");
@@ -71,8 +71,8 @@ public class TransferServiceTest {
     @Test
     @DisplayName("Deve lançar erro ao calcular taxa de transferencia.")
     public void givenInvalidSchedulingDateOrTransferValue_WhenCallDescontaTaxa_ThenThrowAnException() {
-        LocalDate schedulingDate = LocalDate.now().plusDays(100);
-        Transfer transfer = Transfer.builder().schedulingDate(schedulingDate).transferValue(1000.0).build();
+        LocalDate transferDate = LocalDate.now().plusDays(100);
+        Transfer transfer = Transfer.builder().transferDate(transferDate).transferValue(1000.0).build();
 
         Throwable error = catchThrowableOfType(() -> transferService.createTransfer(transfer), RegraNegocioException.class);
         Assertions.assertThat(error).isInstanceOf(RegraNegocioException.class).hasMessage("Não foi possível calcular uma taxa para os parâmetros passados.");
@@ -94,6 +94,55 @@ public class TransferServiceTest {
         assertThat(returnedTransfersList.getContent()).isEqualTo(transferList);
         assertThat(returnedTransfersList.getPageable().getPageNumber()).isZero();
         assertThat(returnedTransfersList.getPageable().getPageSize()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Dias = 0 e Valor < 1000")
+    public void givenCaseA_WhenCallCalculaTaxa_ThenReturnTransferWithValor() {
+        Transfer transfer = Transfer.builder().transferDate(LocalDate.now()).transferValue(100.0).build();
+        Transfer returnedTransfer = transferService.descontaTaxa(transfer);
+        assertThat(returnedTransfer.getTransferValue()).isEqualTo(94.0);
+    }
+
+    @Test
+    @DisplayName("Dias > 0 e Valor > 1000")
+    public void givenCaseB_WhenCallCalculaTaxa_ThenReturnTransferWithValor() {
+        Transfer transfer = Transfer.builder().transferDate(LocalDate.now().plusDays(1)).transferValue(2000.0).build();
+        Transfer returnedTransfer = transferService.descontaTaxa(transfer);
+        assertThat(returnedTransfer.getTransferValue()).isEqualTo(1988);
+    }
+
+    @Test
+    @DisplayName("Dias > 10 e Valor > 2000")
+    public void givenCaseC1_WhenCallCalculaTaxa_ThenReturnTransferWithValor() {
+        Transfer transfer = Transfer.builder().transferDate(LocalDate.now().plusDays(11)).transferValue(10000.0).build();
+        Transfer returnedTransfer = transferService.descontaTaxa(transfer);
+        assertThat(returnedTransfer.getTransferValue()).isEqualTo(9180);
+    }
+
+    @Test
+    @DisplayName("Dias > 20 e Valor > 2000")
+    public void givenCaseC2_WhenCallCalculaTaxa_ThenReturnTransferWithValor() {
+        Transfer transfer = Transfer.builder().transferDate(LocalDate.now().plusDays(21)).transferValue(10000.0).build();
+        Transfer returnedTransfer = transferService.descontaTaxa(transfer);
+        assertThat(returnedTransfer.getTransferValue()).isEqualTo(9310);
+    }
+
+
+    @Test
+    @DisplayName("Dias > 30 e Valor > 2000")
+    public void givenCaseC3_WhenCallCalculaTaxa_ThenReturnTransferWithValor() {
+        Transfer transfer = Transfer.builder().transferDate(LocalDate.now().plusDays(31)).transferValue(10000.0).build();
+        Transfer returnedTransfer = transferService.descontaTaxa(transfer);
+        assertThat(returnedTransfer.getTransferValue()).isEqualTo(9530);
+    }
+
+    @Test
+    @DisplayName("Dias > 40 e Valor > 2000")
+    public void givenCaseC4_WhenCallCalculaTaxa_ThenReturnTransferWithValor() {
+        Transfer transfer = Transfer.builder().transferDate(LocalDate.now().plusDays(41)).transferValue(10000.0).build();
+        Transfer returnedTransfer = transferService.descontaTaxa(transfer);
+        assertThat(returnedTransfer.getTransferValue()).isEqualTo(9830);
     }
 
     private Transfer getTransfer() {

@@ -9,4 +9,8 @@ public interface TransferService {
     Transfer createTransfer(Transfer transfer);
 
     Page<Transfer> getTransfersList(Transfer transfer, Pageable pageable);
+
+    Page<Transfer> getTransfersList(Pageable pageable);
+
+    Transfer descontaTaxa(Transfer transfer);
 }

@@ -23,9 +23,6 @@ public class TransferServiceImp implements TransferService {
     @Override
     @Transactional
     public Transfer createTransfer(Transfer transfer) {
-
-        transfer = descontaTaxa(transfer);
-
         return transferRepository.save(descontaTaxa(transfer));
     }
 
@@ -39,8 +36,13 @@ public class TransferServiceImp implements TransferService {
         return transferRepository.findAll(example, pageable);
     }
 
+    @Override
+    public Page<Transfer> getTransfersList(Pageable pageable) {
+        return transferRepository.findAll(pageable);
+    }
 
-    private Transfer descontaTaxa(Transfer transfer) {
+    @Override
+    public Transfer descontaTaxa(Transfer transfer) {
         LocalDate todayDate = LocalDate.now();
         LocalDate transferDate = transfer.getTransferDate();
 
@@ -52,23 +54,29 @@ public class TransferServiceImp implements TransferService {
 
         long days = ChronoUnit.DAYS.between(todayDate, transferDate);
         Double transferValue = transfer.getTransferValue();
-
-        if (transferValue > 0.0 && transferValue <= 1000.0 && days == 0) {
-            transferValue -= (3.0 + (transferValue * 0.03));
-        } else if ((transferValue > 1000 && transferValue <= 2000.0) && (days > 0 && days <= 10)) {
-            transferValue -= 12.0;
-        } else if (transferValue > 2000.0) {
+        Double taxa;
+        if (transferValue > 0.0 && transferValue <= 1000.0 && days == 0) { //CASE A + D
+            taxa = (3.0 + (transferValue * 0.030));
+        } else if ((transferValue > 1000 && transferValue <= 2000.0) && (days > 0 && days <= 10)) { //CASE B + D
+            taxa = 12.0;
+        } else if (transferValue > 2000.0) { //CASE C + D
             if (days > 10 && days <= 20) {
-                transferValue -= (transferValue * 0.082);
+                taxa = (transferValue * 0.0820);
             } else if (days > 20 && days <= 30) {
-                transferValue -= (transferValue * 0.047);
+                taxa = (transferValue * 0.0690);
             } else if (days > 30 && days <= 40) {
-                transferValue -= (transferValue * 0.017);
+                taxa = (transferValue * 0.0470);
+            } else if (days > 40) {
+                taxa = (transferValue * 0.0170);
             } else {
                 throw new RegraNegocioException("Não foi possível calcular uma taxa para os parâmetros passados.");
             }
+        } else {
+            throw new RegraNegocioException("Não foi possível calcular uma taxa para os parâmetros passados.");
         }
 
+        transferValue -= taxa;
+        transfer.setTransferTaxa(taxa);
         transfer.setTransferValue(transferValue);
 
         return transfer;
