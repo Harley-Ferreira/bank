@@ -30,6 +30,9 @@ public class Transfer {
     @Column(name = "valor_transferencia", nullable = false)
     private Double transferValue;
 
+    @Column(name = "valor_taxa", nullable = false)
+    private Double transferTaxa;
+
     @Column(name = "data_transferencia", nullable = false)
     private LocalDate transferDate;
 

@@ -63,7 +63,7 @@ public class TransferControllerTest {
 
         mockMvc.perform(requestBuilder)
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("id").isNotEmpty())
+                .andExpect(jsonPath("_id").value(1l))
                 .andExpect(jsonPath("originAccount").value(123456));
     }
 
@@ -90,7 +90,7 @@ public class TransferControllerTest {
     public void givenAnyParam_WhenCallGetTransfersList_ThenReturnAPageTransferDTO() throws Exception {
         Transfer transfer = getTransfer();
 
-        BDDMockito.given(transferService.getTransfersList(Mockito.any(Transfer.class), Mockito.any(Pageable.class)))
+        BDDMockito.given(transferService.getTransfersList(Mockito.any(Pageable.class)))
                 .willReturn(new PageImpl<>(Arrays.asList(transfer), PageRequest.of(0, 100), 1));
 
         String queryString = String.format("?page=0&size=100");
@@ -114,6 +114,7 @@ public class TransferControllerTest {
                 .originAccount(123456)
                 .destinationAccount(654321)
                 .transferValue(100.0)
+                .transferTaxa(6.0)
                 .schedulingDate(schedulingDate)
                 .transferDate(LocalDate.now()).build();
     }
