@@ -39,6 +39,11 @@ public class TransferServiceImp implements TransferService {
         return transferRepository.findAll(example, pageable);
     }
 
+    @Override
+    public Page<Transfer> getTransfersList(Pageable pageable) {
+        return transferRepository.findAll(pageable);
+    }
+
 
     private Transfer descontaTaxa(Transfer transfer) {
         LocalDate todayDate = LocalDate.now();

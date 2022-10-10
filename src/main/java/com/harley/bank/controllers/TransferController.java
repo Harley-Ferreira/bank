@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
@@ -35,10 +36,23 @@ public class TransferController {
         return modelMapper.map(savedTransfer, TransferDTO.class);
     }
 
+//    @GetMapping
+//    public Page<TransferDTO> getTransfersList(TransferDTO transferDTO, Pageable pageable) {
+//        Transfer transferFilter = modelMapper.map(transferDTO, Transfer.class);
+//        Page<Transfer> transferList = transferService.getTransfersList(pageable);
+//        List<TransferDTO> transferDTOList = transferList.getContent()
+//                .stream()
+//                .map(t -> modelMapper.map(t, TransferDTO.class))
+//                .toList();
+//
+//        return new PageImpl<>(transferDTOList, pageable, transferList.getTotalElements());
+//    }
+
     @GetMapping
-    public Page<TransferDTO> getTransfersList(TransferDTO transferDTO, Pageable pageable) {
-        Transfer transferFilter = modelMapper.map(transferDTO, Transfer.class);
-        Page<Transfer> transferList = transferService.getTransfersList(transferFilter, pageable);
+    public Page<TransferDTO> getTransfersList(@RequestParam(value = "page", defaultValue = "0") Integer page,
+                                               @RequestParam(value = "size", defaultValue = "10") Integer sizePage) {
+        PageRequest pageable = PageRequest.of(page, sizePage);
+        Page<Transfer> transferList = transferService.getTransfersList(pageable);
         List<TransferDTO> transferDTOList = transferList.getContent()
                 .stream()
                 .map(t -> modelMapper.map(t, TransferDTO.class))
